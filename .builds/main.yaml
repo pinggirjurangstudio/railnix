@@ -1,0 +1,16 @@
+submitter:
+  git.sr.ht:
+    enabled: true
+    allow-refs:
+      - refs/heads/main
+      - "refs/tags/*"
+image: nixos/unstable
+environment:
+  NIX_CONFIG: "experimental-features = nix-command flakes"
+  PROJECT: railnix
+sources:
+  - https://git.sr.ht/~bzm/railnix
+tasks:
+  - check: |
+      cd $PROJECT
+      nix flake check --all-systems
