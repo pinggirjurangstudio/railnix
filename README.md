@@ -3,4 +3,4 @@
 
 **Railnix** = [Railway](https://railway.com/) + [OpenTofu](https://opentofu.org/) + [Nix](https://nixos.org/)
 
-Manage Railway monorepo project a Nix way a.k.a declarative.
+Manage Railway monorepo project in a Nix way a.k.a declarative.
