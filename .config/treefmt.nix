@@ -15,6 +15,13 @@
           "*.yml"
         ];
       };
+      actionlint = {
+        command = "${pkgs.actionlint}/bin/actionlint";
+        includes = [
+          ".github/workflows/*.yaml"
+          ".github/workflows/*.yml"
+        ];
+      };
     };
   };
 }

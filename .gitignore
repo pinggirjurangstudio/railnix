@@ -14,5 +14,5 @@ result-*
 **/.env
 **/.env.*
 
-# railnix (this is testing purposes, do not ignore it in your real infrastructure)
+# railnix (this is for testing purposes, do not ignore it in your real infrastructure)
 **/railway.json

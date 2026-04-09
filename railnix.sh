@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RAILWAY_NO_TELEMETRY=1
 
 generateTerraformConfig() {
   echo "[railnix] generate terraform config..."
@@ -73,6 +74,7 @@ main() {
       ;;
     *)
       echo "Usage: railnix {init|plan|up <environment>}"
+      exit 1
       ;;
   esac
 }

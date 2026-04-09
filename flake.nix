@@ -1,17 +1,15 @@
 {
-  description = "Manage Railway monorepo project in a Nix way a.k.a declarative";
+  description = "Declarative Railway monorepo configuration via Nix Flakes";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
   outputs =
-    { nixpkgs, ... }@inputs:
+    { ... }@inputs:
     let
       flakeModule = import ./.;
     in
     import ./mkflake.nix {
-      inherit nixpkgs inputs;
+      inherit inputs;
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -30,6 +28,7 @@
         # nix run .#railnix up development
         {
           imports = [ flakeModule ];
+
           railnix = {
             enable = true;
 

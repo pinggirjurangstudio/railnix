@@ -1,30 +1,30 @@
-# A modular flake outputs builder.
+# A lightweight, modular Nix Flakes outputs builder designed to be vendored.
 #
 # Vendoring this file by using the following template:
-# nix flake init -t sourcehut:~bzm/smoothflake#lib
+# nix flake init -t github:pinggirjurangstudio/mkflake
 #
 # Usage:
 # {
 #   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 #   outputs =
-#     { nixpkgs, ... }@inputs:
+#     { ... }@inputs:
 #     import ./mkflake.nix {
-#       inherit nixpkgs inputs;
+#       inherit inputs;
 #       systems = [ "aarch64-darwin" ];
 #       imports = [ ./your-module.nix ];
 #     };
 # }
 #
-# For more information, see: https://git.sr.ht/~bzm/smoothflake
+# For more information, see: https://github.com/pinggirjurangstudio/mkflake
 
 {
-  nixpkgs,
   inputs,
   systems ? [ ],
   imports ? [ ],
 }:
 
 let
+  inherit (inputs) self nixpkgs;
   inherit (nixpkgs) lib;
   inherit (lib) types;
   mkOption = type: lib.mkOption { inherit type; };
@@ -125,7 +125,7 @@ let
                   ''
                     set -e
                     PRJ=$TMP/project
-                    cp -r ${inputs.self} $PRJ
+                    cp -r ${self} $PRJ
                     chmod -R a+w $PRJ
                     cd $PRJ
                     export HOME=$TMPDIR
@@ -150,7 +150,7 @@ let
               globalAssertions = map (a: a // { system = null; }) (_global.config.assertions or [ ]);
               perSystemAssertions = map (a: a // { inherit system; }) (config.assertions or [ ]);
               failedAssertions = lib.filter (a: !(a.assertion)) (globalAssertions ++ perSystemAssertions);
-              smoothflakeCheck = pkgs.runCommandLocal "smoothflake-check" { } ''
+              mkflakeCheck = pkgs.runCommandLocal "mkflake-check" { } ''
                 ${
                   if failedAssertions != [ ] then
                     throw ''
@@ -166,7 +166,7 @@ let
             {
               formatter = lib.mkDefault treefmtFormatter;
               checks.treefmt = lib.mkDefault treefmtCheck;
-              checks.smoothflake = smoothflakeCheck;
+              checks.mkflake = mkflakeCheck;
             }
           )
         ];
