@@ -31,37 +31,28 @@
 
           railnix = {
             enable = true;
-
-            project = {
-              name = "railnix";
-              defaultEnvironment = "production";
-              src = ./.;
-            };
-
             providers = {
               cloudflare.accountId = "my-cloudflare-account-id";
               railway = { };
             };
 
-            services = {
-              backend = {
-                src = ./examples/backend;
-                dependencies = [ ./examples/lib ];
-              };
-              frontend = {
-                src = ./examples/frontend;
-              };
+            project = {
+              name = "railnix";
+              root = ./.;
             };
 
-            environments.development.serviceInstances = {
-              backend = { };
-              frontend = { };
+            environments = {
+              allowed = [
+                "development"
+                "production"
+              ];
+              default = "production";
             };
 
-            environments.production.serviceInstances = {
-              backend = { };
-              frontend = { };
-            };
+            services = [
+              ./examples/backend
+              ./examples/frontend
+            ];
           };
         }
       ];

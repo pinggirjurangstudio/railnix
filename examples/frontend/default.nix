@@ -1,0 +1,4 @@
+{
+  environments.development = { };
+  environments.production = { };
+}

@@ -1,6 +1,8 @@
 { config, lib, ... }:
 
 let
+  cfg = config.railnix;
+
   inherit (lib) types mkOption mkEnableOption;
   inherit (import ./lib.nix { inherit lib; })
     mkTerraformConfig
@@ -9,21 +11,7 @@ let
     mkRelativePath
     ;
 
-  project = types.submodule {
-    options = {
-      name = mkOption {
-        type = types.str;
-      };
-      defaultEnvironment = mkOption {
-        type = types.str;
-      };
-      src = mkOption {
-        type = types.path;
-      };
-    };
-  };
-
-  providers = types.submodule {
+  providersSubmodule = types.submodule {
     options = {
       cloudflare = mkOption {
         type = types.submodule {
@@ -47,19 +35,64 @@ let
     };
   };
 
-  service = types.submodule (
+  projectSubmodule = types.submodule {
+    options = {
+      name = mkOption {
+        type = types.str;
+      };
+      root = mkOption {
+        type = types.path;
+      };
+    };
+  };
+
+  environmentsSubmodule = types.submodule {
+    options = {
+      allowed = mkOption {
+        type = types.listOf types.str;
+      };
+      default = mkOption {
+        type = types.str;
+      };
+    };
+  };
+
+  servicesSubmodule = types.submodule (
     { config, ... }:
-    let
-      src = mkRailwayPath cfg.project config.src;
-    in
     {
       options = {
-        src = mkOption {
-          type = types.path;
+        name = mkOption {
+          type = types.str;
+          default = lib.baseNameOf config.relativePath;
         };
         dependencies = mkOption {
           type = types.listOf types.path;
           default = [ ];
+        };
+        environments = mkOption {
+          type = types.attrsOf (
+            types.submodule (
+              { name, ... }:
+              {
+                config.name = name;
+                options = {
+                  name = mkOption {
+                    type = types.str;
+                    internal = true;
+                  };
+                };
+              }
+            )
+          );
+          default = { };
+        };
+        relativePath = mkOption {
+          type = types.str;
+          internal = true;
+        };
+        railwayPath = mkOption {
+          type = types.str;
+          internal = true;
         };
         generatedConfig = mkOption {
           type = types.unspecified;
@@ -69,56 +102,71 @@ let
       config.generatedConfig = {
         "$schema" = "https://railway.com/railway.schema.json";
         build = {
-          dockerfilePath = "${src}/Dockerfile";
+          dockerfilePath = "${config.railwayPath}/Dockerfile";
           watchPatterns = [
-            "${src}/**"
+            "${config.railwayPath}/**"
           ]
           ++ (lib.map (dep: "${mkRailwayPath cfg.project dep}/**") config.dependencies);
         };
       };
     }
   );
-
-  environment = types.submodule {
-    options = {
-      serviceInstances = mkOption {
-        type = types.attrsOf serviceInstance;
-        default = { };
-      };
-    };
-  };
-
-  # NOTE: serviceInstance still unutilize
-  # TODO: use serviceInstance for generating domain and variable terraform resource
-  serviceInstance = types.submodule {
-    options = {
-      domain = mkOption {
-        type = types.str;
-      };
-    };
-  };
-
-  cfg = config.railnix;
 in
 
 {
   options.railnix = {
     enable = mkEnableOption "railnix";
-    project = mkOption {
-      type = project;
-    };
     providers = mkOption {
-      type = providers;
+      type = providersSubmodule;
     };
-    services = mkOption {
-      type = types.attrsOf service;
+    project = mkOption {
+      type = projectSubmodule;
     };
     environments = mkOption {
-      type = types.attrsOf environment;
+      type = environmentsSubmodule;
+    };
+    services = mkOption {
+      type = types.listOf (
+        types.coercedTo types.path (
+          p:
+          let
+            service = import p;
+            servicePath = if lib.pathType p == "directory" then p else lib.dirOf p;
+          in
+          {
+            railwayPath = mkRailwayPath cfg.project servicePath;
+            relativePath = mkRelativePath cfg.project servicePath;
+          }
+          // service
+        ) servicesSubmodule
+      );
+      default = [ ];
     };
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = lib.elem cfg.environments.default cfg.environments.allowed;
+        message = ''
+          Default environment '${cfg.environments.default}' is not in the allowed environments list.
+          Allowed environments are: ${lib.concatStringsSep ", " cfg.environments.allowed}.
+        '';
+      }
+    ]
+    ++ lib.flatten (
+      lib.map (
+        service:
+        lib.mapAttrsToList (_: environment: {
+          assertion = lib.elem environment.name cfg.environments.allowed;
+          message = ''
+            Service '${service.name}' references undefined environment '${environment.name}'.
+            Allowed environments are: ${lib.concatStringsSep ", " cfg.environments.allowed}.
+          '';
+        }) service.environments
+      ) cfg.services
+    );
+
     lib = {
       generateTerraformConfig = (
         args:
@@ -126,10 +174,10 @@ in
           modules = [ ./terraform.nix ];
           specialArgs = {
             inherit (cfg)
-              project
               providers
-              services
+              project
               environments
+              services
               ;
           };
         }
@@ -137,13 +185,18 @@ in
 
       generateDeploymentPlan = (
         environment:
-        if !lib.hasAttr environment cfg.environments then
-          throw "Environment ${environment} not found"
+        if !lib.elem environment cfg.environments.allowed then
+          throw "Environment '${environment}' not found in 'environments.allowed'."
         else
-          lib.mapAttrs (name: serviceInstance: {
-            config = cfg.services.${name}.generatedConfig;
-            src = mkRelativePath cfg.project cfg.services.${name}.src;
-          }) cfg.environments.${environment}.serviceInstances
+          lib.listToAttrs (
+            lib.map (service: {
+              name = service.name;
+              value = {
+                config = service.generatedConfig;
+                path = service.relativePath;
+              };
+            }) (lib.filter (service: lib.hasAttr environment service.environments) cfg.services)
+          )
       );
     };
 
@@ -162,9 +215,10 @@ in
 
         checks.railnix =
           let
-            environments = lib.attrNames cfg.environments;
             terraformConfig = self.lib.generateTerraformConfig { };
-            deploymentPlans = lib.map (environment: self.lib.generateDeploymentPlan environment) environments;
+            deploymentPlans = lib.map (
+              environment: self.lib.generateDeploymentPlan environment
+            ) cfg.environments.allowed;
             result = lib.toJSON {
               inherit terraformConfig deploymentPlans;
             };

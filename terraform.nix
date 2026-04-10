@@ -1,15 +1,14 @@
 {
   lib,
-  project,
   providers,
-  services,
+  project,
   environments,
+  services,
   ...
 }:
 
 let
   inherit (providers) cloudflare;
-  inherit (import ./lib.nix { inherit lib; }) mkRailwayPath;
 in
 
 lib.mkMerge [
@@ -51,7 +50,7 @@ lib.mkMerge [
     # https://registry.terraform.io/providers/terraform-community-providers/railway/latest/docs/resources/project
     resource.railway_project.main = {
       inherit (project) name;
-      default_environment.name = project.defaultEnvironment;
+      default_environment.name = environments.default;
     };
 
     output = {
@@ -67,29 +66,36 @@ lib.mkMerge [
   # environments
   {
     # https://registry.terraform.io/providers/terraform-community-providers/railway/latest/docs/resources/environment
-    resource.railway_environment = lib.mapAttrs (name: environment: {
-      inherit name;
-      project_id = "\${railway_project.main.id}";
-    }) (lib.filterAttrs (name: value: name != project.defaultEnvironment) environments);
+    resource.railway_environment = lib.listToAttrs (
+      lib.map (environment: {
+        name = environment;
+        value = {
+          name = environment;
+          project_id = "\${railway_project.main.id}";
+        };
+      }) (lib.filter (environment: environment != environments.default) environments.allowed)
+    );
   }
 
   # services
   {
     # https://registry.terraform.io/providers/terraform-community-providers/railway/latest/docs/resources/service
-    resource.railway_service = lib.mapAttrs (
-      name: service:
-      let
-        hasDeps = (service ? dependencies) && (lib.length service.dependencies > 0);
-        src = mkRailwayPath project service.src;
-      in
-      {
-        inherit name;
-        project_id = "\${railway_project.main.id}";
-        # https://docs.railway.com/builds/build-configuration#set-the-root-directory
-        root_directory = if hasDeps then "/" else src;
-        config_path = "${src}/railway.json";
-      }
-    ) services;
+    resource.railway_service = lib.listToAttrs (
+      lib.map (service: {
+        name = service.name;
+        value =
+          let
+            hasDeps = (service ? dependencies) && (lib.length service.dependencies > 0);
+          in
+          {
+            inherit (service) name;
+            project_id = "\${railway_project.main.id}";
+            # https://docs.railway.com/builds/build-configuration#set-the-root-directory
+            root_directory = if hasDeps then "/" else service.railwayPath;
+            config_path = "${service.railwayPath}/railway.json";
+          };
+      }) services
+    );
   }
 
 ]

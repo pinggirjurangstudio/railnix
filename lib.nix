@@ -74,7 +74,7 @@ in
     if !exists then
       throw "Path '${toString targetPath}' does not exist. Check your 'railnix' configuration."
     else
-      lib.removePrefix (lib.toString project.src) (lib.toString targetPath);
+      lib.removePrefix (lib.toString project.root) (lib.toString targetPath);
 
   mkRelativePath =
     project: targetPath:
@@ -84,5 +84,5 @@ in
     if !exists then
       throw "Path '${toString targetPath}' does not exist. Check your 'railnix' configuration."
     else
-      lib.path.removePrefix project.src targetPath;
+      lib.path.removePrefix project.root targetPath;
 }

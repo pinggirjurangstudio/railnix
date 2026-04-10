@@ -35,7 +35,7 @@ deploy() {
   echo "[railnix] deploy '$project_name($environment):$project_id'..."
   for service in $services; do
     local src config
-    src=$(echo "$plan" | jq -r ".\"$service\".src")
+    src=$(echo "$plan" | jq -r ".\"$service\".path")
     config=$(echo "$plan" | jq -c ".\"$service\".config")
     echo "[railnix] generate railway.json for '$service'..."
     echo "$config" | jq . > "$src/railway.json"
