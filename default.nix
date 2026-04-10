@@ -28,7 +28,7 @@ let
       railway = mkOption {
         type = types.submodule {
           options = {
-            apiToken = mkSecretOption "RAILWAY_TOKEN";
+            apiToken = mkSecretOption "RAILWAY_API_TOKEN";
           };
         };
       };

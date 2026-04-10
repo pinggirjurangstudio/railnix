@@ -16,13 +16,13 @@ init() {
 plan() {
   generateTerraformConfig
   echo "[railnix] preview terraform plan..."
-  tofu init && tofu plan
+  tofu init && RAILWAY_TOKEN=$RAILWAY_API_TOKEN tofu plan
 }
 
 provision() {
   generateTerraformConfig
   echo "[railnix] provision infrastructure..."
-  tofu init && tofu apply -auto-approve
+  tofu init && RAILWAY_TOKEN=$RAILWAY_API_TOKEN tofu apply -auto-approve
 }
 
 deploy() {
