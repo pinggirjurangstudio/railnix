@@ -98,28 +98,4 @@ lib.mkMerge [
     );
   }
 
-  # variable
-  {
-    resource.railway_variable = lib.listToAttrs (
-      lib.concatLists (
-        lib.map (
-          service:
-          lib.mapAttrsToList (_: environment: {
-            name = "default_${service.name}_${environment.name}";
-            value = {
-              name = "MANAGED_BY";
-              value = "railnix";
-              service_id = "\${railway_service.${service.name}.id}";
-              environment_id =
-                if environment.name == environments.default then
-                  "\${railway_project.main.default_environment.id}"
-                else
-                  "\${railway_environment.${environment.name}.id}";
-            };
-          }) service.environments
-        ) services
-      )
-    );
-  }
-
 ]
