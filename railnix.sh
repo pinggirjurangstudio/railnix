@@ -43,6 +43,11 @@ deploy() {
   echo "[railnix] done"
 }
 
+cleanup() {
+  rm -f railnix.tf.json
+  rm -f railway.json
+}
+
 main() {
   local cmd
   if [ $# -eq 0 ]; then
@@ -55,9 +60,11 @@ main() {
   case "$cmd" in
     init)
       init
+      cleanup
       ;;
     plan)
       plan
+      cleanup
       ;;
     up)
       local environment
@@ -69,6 +76,7 @@ main() {
       fi
       provision
       deploy "$environment"
+      cleanup
       ;;
     *)
       echo "Usage: railnix {init|plan|up <environment>}"
