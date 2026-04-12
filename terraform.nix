@@ -97,7 +97,6 @@ lib.mkMerge [
             project_id = "\${railway_project.main.id}";
             # https://docs.railway.com/builds/build-configuration#set-the-root-directory
             root_directory = if hasDeps then "/" else service.railwayPath;
-            config_path = "${service.railwayPath}/railway.json";
             depends_on = envDeps;
           };
       }) services

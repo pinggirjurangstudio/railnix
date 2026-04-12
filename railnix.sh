@@ -32,13 +32,11 @@ deploy() {
   environment=$1
   plan=$(nix eval .#lib.generateDeploymentPlan --apply "f: f \"$environment\"" --json)
   services=$(echo "$plan" | jq -r 'keys[]')
-  echo "[railnix] deploy '$project_name($environment):$project_id'..."
+  echo "[railnix] deploy '$project_name($environment)'..."
   for service in $services; do
-    local src config
-    src=$(echo "$plan" | jq -r ".\"$service\".path")
     config=$(echo "$plan" | jq -c ".\"$service\".config")
     echo "[railnix] generate railway.json for '$service'..."
-    echo "$config" | jq . > "$src/railway.json"
+    echo "$config" | jq . > railway.json
     echo "[railnix] deploy '$service'..."
     railway up --json --ci --project "$project_id" --environment "$environment" --service "$service"
   done

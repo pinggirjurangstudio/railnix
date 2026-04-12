@@ -193,7 +193,6 @@ in
               name = service.name;
               value = {
                 config = service.generatedConfig;
-                path = service.relativePath;
               };
             }) (lib.filter (service: lib.hasAttr environment service.environments) cfg.services)
           )
