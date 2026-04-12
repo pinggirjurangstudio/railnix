@@ -38,7 +38,7 @@ deploy() {
     echo "[railnix] generate railway.json for '$service'..."
     echo "$config" | jq . > railway.json
     echo "[railnix] deploy '$service'..."
-    railway up --json --ci --project "$project_id" --environment "$environment" --service "$service"
+    railway up --ci --project "$project_id" --environment "$environment" --service "$service"
   done
   echo "[railnix] done"
 }
