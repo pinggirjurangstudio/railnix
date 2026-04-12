@@ -85,7 +85,6 @@ lib.mkMerge [
         name = service.name;
         value =
           let
-            hasDeps = (service ? dependencies) && (lib.length service.dependencies > 0);
             defaultEnvDep = "railway_project.main";
             allowedEnvDeps = lib.map (environment: "railway_environment.${environment}") (
               lib.filter (environment: environment != environments.default) environments.allowed
@@ -95,8 +94,6 @@ lib.mkMerge [
           {
             inherit (service) name;
             project_id = "\${railway_project.main.id}";
-            # https://docs.railway.com/builds/build-configuration#set-the-root-directory
-            root_directory = if hasDeps then "/" else service.railwayPath;
             depends_on = envDeps;
           };
       }) services
