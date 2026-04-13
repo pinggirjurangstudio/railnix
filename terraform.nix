@@ -100,4 +100,31 @@ lib.mkMerge [
     );
   }
 
+  # domains
+  {
+    resource.railway_custom_domain = lib.listToAttrs (
+      lib.concatLists (
+        lib.map (
+          service:
+          lib.concatLists (
+            lib.mapAttrsToList (
+              _: environment:
+              lib.mapAttrsToList (domainKey: domainValue: {
+                name = "${service.name}_${environment.name}_${domainKey}";
+                value = {
+                  domain = domainValue;
+                  service_id = "\${railway_service.${service.name}.id}";
+                  environment_id =
+                    if environment.name == environments.default then
+                      "\${railway_project.main.default_environment.id}"
+                    else
+                      "\${railway_environment.${environment.name}.id}";
+                };
+              }) environment.domains
+            ) service.environments
+          )
+        ) services
+      )
+    );
+  }
 ]

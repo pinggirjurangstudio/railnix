@@ -1,4 +1,6 @@
 {
   dependencies = [ ../shared ];
-  environments.development = { };
+  environments.development = {
+    domains.main = "backend-dev.example.com";
+  };
 }

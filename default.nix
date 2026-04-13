@@ -80,6 +80,10 @@ let
                     type = types.str;
                     internal = true;
                   };
+                  domains = mkOption {
+                    type = types.attrsOf types.str;
+                    default = { };
+                  };
                 };
               }
             )
