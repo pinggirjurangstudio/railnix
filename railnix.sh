@@ -72,15 +72,29 @@ main() {
       cleanup
       ;;
     up)
-      local environment
-      environment=''${1:-}
+      local environment=
+      local message=
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          -m|--message)
+            message="$2"
+            shift 2
+            ;;
+          *)
+            if [[ -z "$environment" ]]; then
+              environment="$1"
+            fi
+            shift
+            ;;
+        esac
+      done
       if [ -z "$environment" ]; then
         echo "[railnix] 'railnix up' requires an environment name."
         echo "Usage: railnix up <environment>"
         exit 1
       fi
       provision
-      deploy "$environment"
+      deploy "$environment" "$message"
       cleanup
       ;;
     *)
