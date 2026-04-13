@@ -90,6 +90,31 @@ let
           );
           default = { };
         };
+        build = mkOption {
+          type = types.submodule {
+            options = {
+              builder = mkOption {
+                type = types.str;
+                internal = true;
+                default = "DOCKERFILE";
+              };
+              watchPatterns = mkOption {
+                type = types.listOf types.str;
+                internal = true;
+                default = [
+                  "${config.railwayPath}/**"
+                ]
+                ++ (lib.map (dep: "${mkRailwayPath cfg.project dep}/**") config.dependencies);
+              };
+              dockerfilePath = mkOption {
+                type = types.str;
+                internal = true;
+                default = "${config.railwayPath}/Dockerfile";
+              };
+            };
+          };
+          default = { };
+        };
         relativePath = mkOption {
           type = types.str;
           internal = true;
@@ -97,20 +122,6 @@ let
         railwayPath = mkOption {
           type = types.str;
           internal = true;
-        };
-        generatedConfig = mkOption {
-          type = types.unspecified;
-          internal = true;
-        };
-      };
-      config.generatedConfig = {
-        "$schema" = "https://railway.com/railway.schema.json";
-        build = {
-          dockerfilePath = "${config.railwayPath}/Dockerfile";
-          watchPatterns = [
-            "${config.railwayPath}/**"
-          ]
-          ++ (lib.map (dep: "${mkRailwayPath cfg.project dep}/**") config.dependencies);
         };
       };
     }
@@ -196,7 +207,10 @@ in
             lib.map (service: {
               name = service.name;
               value = {
-                config = service.generatedConfig;
+                config = {
+                  "$schema" = "https://railway.com/railway.schema.json";
+                  inherit (service) build;
+                };
               };
             }) (lib.filter (service: lib.hasAttr environment service.environments) cfg.services)
           )
