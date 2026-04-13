@@ -115,6 +115,21 @@ let
           };
           default = { };
         };
+        deploy = mkOption {
+          type = types.submodule {
+            options = {
+              healthcheckPath = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+              };
+              healthcheckTimeout = mkOption {
+                type = types.nullOr types.int;
+                default = null;
+              };
+            };
+          };
+          default = { };
+        };
         relativePath = mkOption {
           type = types.str;
           internal = true;
@@ -209,7 +224,7 @@ in
               value = {
                 config = {
                   "$schema" = "https://railway.com/railway.schema.json";
-                  inherit (service) build;
+                  inherit (service) build deploy;
                 };
               };
             }) (lib.filter (service: lib.hasAttr environment service.environments) cfg.services)

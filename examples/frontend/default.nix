@@ -1,4 +1,8 @@
 {
+  deploy = {
+    healthcheckPath = "/health";
+    healthcheckTimeout = 300;
+  };
   environments.development = {
     domains.main = "frontend-dev.example.com";
   };
