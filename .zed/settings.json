@@ -1,0 +1,16 @@
+{
+  "lsp": {
+    "nixd": {
+      "settings": {
+        "options": {
+          "mkflake-global": {
+            "expr": "(builtins.getFlake (builtins.toString ./.)).debug.mkflake.global",
+          },
+          "mkflake-system": {
+            "expr": "(builtins.getFlake (builtins.toString ./.)).debug.mkflake.${builtins.currentSystem}",
+          },
+        },
+      },
+    },
+  },
+}
