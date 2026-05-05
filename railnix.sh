@@ -4,7 +4,7 @@ export RAILWAY_NO_TELEMETRY=1
 
 generateTerraformConfig() {
   echo "[railnix] generate terraform config..."
-  nix eval .#lib.generateTerraformConfig --apply "f: f {}" --json | jq -S . > railnix.tf.json
+  nix eval .#lib.generateTerraformConfig --apply "f: f {}" --json | jq -S . >railnix.tf.json
 }
 
 init() {
@@ -41,7 +41,7 @@ deploy() {
   for service in $services; do
     config=$(echo "$plan" | jq -c ".\"$service\".config")
     echo "[railnix] generate railway.json for '$service'..."
-    echo "$config" | jq . > railway.json
+    echo "$config" | jq . >railway.json
     echo "[railnix] deploy '$service'..."
     railway up --ci --project "$project_id" --environment "$environment" --service "$service" "${message_flag[@]}"
   done
@@ -58,49 +58,49 @@ main() {
   if [ $# -eq 0 ]; then
     echo "Usage: railnix {init|plan|up <environment> [-m <message>]}"
     exit 0
-  fi            
+  fi
   cmd=''${1:-}
   shift
 
   case "$cmd" in
-    init)
-      init
-      cleanup
-      ;;
-    plan)
-      plan
-      cleanup
-      ;;
-    up)
-      local environment=
-      local message=
-      while [[ $# -gt 0 ]]; do
-        case "$1" in
-          -m|--message)
-            message="$2"
-            shift 2
-            ;;
-          *)
-            if [[ -z "$environment" ]]; then
-              environment="$1"
-            fi
-            shift
-            ;;
-        esac
-      done
-      if [ -z "$environment" ]; then
-        echo "[railnix] 'railnix up' requires an environment name."
-        echo "Usage: railnix up <environment>"
-        exit 1
-      fi
-      provision
-      deploy "$environment" "$message"
-      cleanup
-      ;;
-    *)
-      echo "Usage: railnix {init|plan|up <environment> [-m <message>]}"
+  init)
+    init
+    cleanup
+    ;;
+  plan)
+    plan
+    cleanup
+    ;;
+  up)
+    local environment=
+    local message=
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+      -m | --message)
+        message="$2"
+        shift 2
+        ;;
+      *)
+        if [[ -z "$environment" ]]; then
+          environment="$1"
+        fi
+        shift
+        ;;
+      esac
+    done
+    if [ -z "$environment" ]; then
+      echo "[railnix] 'railnix up' requires an environment name."
+      echo "Usage: railnix up <environment>"
       exit 1
-      ;;
+    fi
+    provision
+    deploy "$environment" "$message"
+    cleanup
+    ;;
+  *)
+    echo "Usage: railnix {init|plan|up <environment> [-m <message>]}"
+    exit 1
+    ;;
   esac
 }
 
