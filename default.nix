@@ -14,9 +14,11 @@ let
   providersSubmodule = types.submodule {
     options = {
       cloudflare = mkOption {
+        description = "Cloudflare provider configuration.";
         type = types.submodule {
           options = {
             accountId = mkOption {
+              description = "The Cloudflare Account ID.";
               type = types.str;
             };
             apiToken = mkSecretOption "CLOUDFLARE_API_TOKEN";
@@ -26,6 +28,7 @@ let
         };
       };
       railway = mkOption {
+        description = "Railway provider configuration.";
         type = types.submodule {
           options = {
             apiToken = mkSecretOption "RAILWAY_API_TOKEN";
@@ -38,9 +41,11 @@ let
   projectSubmodule = types.submodule {
     options = {
       name = mkOption {
+        description = "The name of the project, used as a prefix or identifier in cloud resources.";
         type = types.str;
       };
       root = mkOption {
+        description = "The absolute path to the root of the project repository.";
         type = types.path;
       };
     };
@@ -49,9 +54,11 @@ let
   environmentsSubmodule = types.submodule {
     options = {
       allowed = mkOption {
+        description = "A list of valid environment names (e.g., `development`, `production`).";
         type = types.listOf types.str;
       };
       default = mkOption {
+        description = "The default environment, must be one of the allowed environments.";
         type = types.str;
       };
     };
@@ -62,14 +69,17 @@ let
     {
       options = {
         name = mkOption {
+          description = "The service name. Defaults to the directory name of the service.";
           type = types.str;
           default = lib.baseNameOf config.relativePath;
         };
         dependencies = mkOption {
+          description = "A list of local paths to other services or files this service depends on.";
           type = types.listOf types.path;
           default = [ ];
         };
         environments = mkOption {
+          description = "Environment-specific configurations for the service.";
           type = types.attrsOf (
             types.submodule (
               { name, ... }:
@@ -77,10 +87,12 @@ let
                 config.name = name;
                 options = {
                   name = mkOption {
+                    description = "Environment name.";
                     type = types.str;
                     internal = true;
                   };
                   domains = mkOption {
+                    description = "List of domain for this specific environment.";
                     type = types.attrsOf types.str;
                     default = { };
                   };
@@ -91,14 +103,17 @@ let
           default = { };
         };
         build = mkOption {
+          description = "Build configurations for the service.";
           type = types.submodule {
             options = {
               builder = mkOption {
+                description = "The build strategy to use (defaulting to DOCKERFILE).";
                 type = types.str;
                 internal = true;
                 default = "DOCKERFILE";
               };
               watchPatterns = mkOption {
+                description = "File patterns that trigger a rebuild when changed.";
                 type = types.listOf types.str;
                 internal = true;
                 default = [
@@ -107,6 +122,7 @@ let
                 ++ (lib.map (dep: "${mkRailwayPath cfg.project dep}/**") config.dependencies);
               };
               dockerfilePath = mkOption {
+                description = "Path to the Dockerfile relative to the project root.";
                 type = types.str;
                 internal = true;
                 default = "${config.railwayPath}/Dockerfile";
@@ -116,13 +132,16 @@ let
           default = { };
         };
         deploy = mkOption {
+          description = "Deploy configurations for the service.";
           type = types.submodule {
             options = {
               healthcheckPath = mkOption {
+                description = "HTTP endpoint path for Railway healthchecks.";
                 type = types.nullOr types.str;
                 default = null;
               };
               healthcheckTimeout = mkOption {
+                description = "Time in seconds to wait before a healthcheck is considered failed.";
                 type = types.nullOr types.int;
                 default = null;
               };
@@ -131,10 +150,12 @@ let
           default = { };
         };
         relativePath = mkOption {
+          description = "Path of the service relative to the project root.";
           type = types.str;
           internal = true;
         };
         railwayPath = mkOption {
+          description = "The path format required specifically for Railway deployment configuration.";
           type = types.str;
           internal = true;
         };
@@ -147,15 +168,19 @@ in
   options.railnix = {
     enable = mkEnableOption "railnix";
     providers = mkOption {
+      description = "Credentials and settings for cloud providers.";
       type = providersSubmodule;
     };
     project = mkOption {
+      description = "A project metadata.";
       type = projectSubmodule;
     };
     environments = mkOption {
+      description = "Configuration for deployment environments.";
       type = environmentsSubmodule;
     };
     services = mkOption {
+      description = "A list of services to be managed, defined by their filesystem paths.";
       type = types.listOf (
         types.coercedTo types.path (
           p:

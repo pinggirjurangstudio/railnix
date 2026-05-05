@@ -25,7 +25,7 @@
         # nix flake check
         # nix run .#railnix init
         # nix run .#railnix plan
-        # nix run .#railnix up development
+        # nix run .#railnix up <environment>
         {
           imports = [ flakeModule ];
 

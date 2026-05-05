@@ -63,7 +63,7 @@ in
     mkOption {
       type = types.str;
       default = "";
-      description = "This option doesn't do anything, you should put apiToken in ${var}.";
+      description = "This option doesn't do anything, you should put the secret in ${var}.";
     };
 
   mkRailwayPath =
